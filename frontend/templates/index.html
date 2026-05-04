@@ -1,0 +1,441 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>PhyloSuite — Phylogenetic Analysis Pipeline</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=IBM+Plex+Mono:wght@400;500&family=Lato:wght@300;400;700&display=swap" rel="stylesheet"/>
+<link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}"/>
+</head>
+<body>
+
+<!-- ╔═ SIDEBAR NAV ═══════════════════════════════════════╗ -->
+<nav class="sidenav">
+  <div class="sidenav-brand">
+    <div class="brand-helix">
+      <svg viewBox="0 0 32 60" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M6 4 Q26 15 6 30 Q26 45 6 56" stroke="#00e5b0" stroke-width="2.5" fill="none"/>
+        <path d="M26 4 Q6 15 26 30 Q6 45 26 56" stroke="#0099ff" stroke-width="2.5" fill="none"/>
+        <line x1="6" y1="15" x2="26" y2="15" stroke="#ffffff22" stroke-width="1"/>
+        <line x1="6" y1="30" x2="26" y2="30" stroke="#ffffff22" stroke-width="1"/>
+        <line x1="6" y1="45" x2="26" y2="45" stroke="#ffffff22" stroke-width="1"/>
+      </svg>
+    </div>
+    <div class="brand-text">
+      <span class="brand-name">PhyloSuite</span>
+      <span class="brand-ver">v1.0</span>
+    </div>
+  </div>
+
+  <div class="sidenav-section-label">PIPELINE</div>
+  <button class="nav-item active" data-view="pipeline">
+    <span class="nav-icon">⟳</span> Full Pipeline
+  </button>
+  <button class="nav-item" data-view="modeltest">
+    <span class="nav-icon">⊞</span> Model Selection
+  </button>
+  <button class="nav-item" data-view="database">
+    <span class="nav-icon">⬡</span> Databases
+  </button>
+
+  <div class="sidenav-section-label">ANALYSIS</div>
+  <button class="nav-item" data-view="compare">
+    <span class="nav-icon">⇌</span> Compare Datasets
+  </button>
+  <button class="nav-item" data-view="report">
+    <span class="nav-icon">◈</span> Reports
+  </button>
+
+  <div class="sidenav-section-label">HISTORY</div>
+  <div class="jobs-mini" id="jobsMini"></div>
+
+  <div class="sidenav-footer">
+    <div class="tool-status" id="toolStatus">
+      <span class="ts-dot" id="tsDot"></span>
+      <span id="tsLabel">Checking tools…</span>
+    </div>
+  </div>
+</nav>
+
+<!-- ╔═ MAIN CONTENT ═══════════════════════════════════════╗ -->
+<main class="main-content">
+
+  <!-- ── TOPBAR ──────────────────────────────────────── -->
+  <div class="topbar">
+    <div class="topbar-title" id="topbarTitle">Full Pipeline</div>
+    <div class="topbar-actions">
+      <span class="topbar-badge" id="jobCountBadge">0 jobs</span>
+    </div>
+  </div>
+
+  <!-- ════════════════════════════════════════════════════
+       VIEW: FULL PIPELINE
+  ════════════════════════════════════════════════════ -->
+  <div class="view active" id="view-pipeline">
+    <div class="view-header">
+      <h1>End-to-End Phylogenetic Pipeline</h1>
+      <p class="view-sub">Fetch sequences → Align → Select model → Infer tree → Generate report</p>
+    </div>
+
+    <!-- Pipeline flow diagram -->
+    <div class="flow-diagram">
+      <div class="flow-step" data-step="fetch">
+        <div class="flow-icon">⬡</div>
+        <div class="flow-label">Input</div>
+      </div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-step" data-step="align">
+        <div class="flow-icon">⫴</div>
+        <div class="flow-label">Align</div>
+      </div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-step" data-step="model">
+        <div class="flow-icon">⊞</div>
+        <div class="flow-label">Model</div>
+      </div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-step" data-step="tree">
+        <div class="flow-icon">⋱</div>
+        <div class="flow-label">Tree</div>
+      </div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-step" data-step="report">
+        <div class="flow-icon">◈</div>
+        <div class="flow-label">Report</div>
+      </div>
+    </div>
+
+    <!-- Input section -->
+    <div class="card" id="inputCard">
+      <div class="card-header">
+        <span class="card-num">01</span>
+        <h2>Sequence Input</h2>
+      </div>
+      <div class="tab-bar">
+        <button class="tab active" data-tab="pl-upload">Upload File</button>
+        <button class="tab" data-tab="pl-database">Fetch from DB</button>
+        <button class="tab" data-tab="pl-paste">Paste FASTA</button>
+      </div>
+
+      <!-- Upload -->
+      <div class="tab-pane active" id="pl-upload">
+        <div class="dropzone" id="plDropzone">
+          <div class="dz-helix">
+            <svg viewBox="0 0 60 60" fill="none" xmlns="http://www.w3.org/2000/svg" width="52" height="52">
+              <circle cx="30" cy="30" r="28" stroke="#00e5b020" stroke-width="1"/>
+              <path d="M15 12 Q45 22 15 35 Q45 48 15 52" stroke="#00e5b0" stroke-width="2" fill="none" opacity=".7"/>
+              <path d="M45 12 Q15 22 45 35 Q15 48 45 52" stroke="#0099ff" stroke-width="2" fill="none" opacity=".7"/>
+            </svg>
+          </div>
+          <p class="dz-title">Drop alignment here</p>
+          <p class="dz-sub">FASTA · NEXUS · PHYLIP · max 100 MB</p>
+          <input type="file" id="plFileInput" accept=".fasta,.fa,.fas,.nex,.nexus,.phy,.phylip,.aln" hidden/>
+          <button class="btn-ghost" onclick="document.getElementById('plFileInput').click()">Browse files</button>
+        </div>
+        <div class="seq-info-box hidden" id="plSeqInfo"></div>
+      </div>
+
+      <!-- DB fetch inline -->
+      <div class="tab-pane" id="pl-database">
+        <div class="db-tabs">
+          <button class="db-tab active" data-db="ncbi">NCBI GenBank</button>
+          <button class="db-tab" data-db="embl">EMBL-ENA</button>
+          <button class="db-tab" data-db="bold">BOLD Systems</button>
+          <button class="db-tab" data-db="uniprot">UniProt</button>
+        </div>
+        <div class="form-grid">
+          <div class="field">
+            <label>Data type</label>
+            <select id="plDbType">
+              <option value="nucleotide">Nucleotide</option>
+              <option value="protein">Protein</option>
+            </select>
+          </div>
+          <div class="field flex3">
+            <label>Search query</label>
+            <input type="text" id="plDbQuery" placeholder="e.g. COI Apis mellifera, 16S rRNA Archaea, rbcL land plants…"/>
+          </div>
+          <div class="field">
+            <label>Max results</label>
+            <select id="plDbMax">
+              <option>10</option><option selected>20</option><option>50</option><option>100</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- BOLD-specific marker selector (hidden by default) -->
+        <div class="bold-opts hidden" id="boldOpts">
+          <div class="form-grid">
+            <div class="field">
+              <label>Barcode marker</label>
+              <select id="boldMarker">
+                <option value="COI-5P">COI-5P (animal barcoding)</option>
+                <option value="ITS">ITS (fungi)</option>
+                <option value="rbcL">rbcL (plants)</option>
+                <option value="matK">matK (plants)</option>
+                <option value="16S">16S (bacteria)</option>
+              </select>
+            </div>
+            <div class="field flex2">
+              <label>Geography (optional)</label>
+              <input type="text" id="boldGeo" placeholder="e.g. Italy, Mediterranean Sea"/>
+            </div>
+          </div>
+        </div>
+
+        <button class="btn-primary" id="plBtnSearch">Search</button>
+        <div class="search-results-wrap hidden" id="plSearchResults"></div>
+        <div class="fetch-bar hidden" id="plFetchBar">
+          <span id="plFetchCount">0 selected</span>
+          <button class="btn-accent" id="plBtnFetch">Fetch & Use Selected →</button>
+        </div>
+        <div class="seq-info-box hidden" id="plSeqInfoDb"></div>
+      </div>
+
+      <!-- Paste -->
+      <div class="tab-pane" id="pl-paste">
+        <div class="field">
+          <label>Paste FASTA alignment</label>
+          <textarea id="plPasteArea" rows="10" placeholder=">Sequence_1&#10;ATGCATGC...&#10;>Sequence_2&#10;ATGCATGC..."></textarea>
+        </div>
+        <button class="btn-primary" id="plBtnPaste">Validate & Use</button>
+        <div class="seq-info-box hidden" id="plSeqInfoPaste"></div>
+      </div>
+    </div>
+
+    <!-- Config section -->
+    <div class="card hidden" id="configCard">
+      <div class="card-header">
+        <span class="card-num">02</span>
+        <h2>Pipeline Configuration</h2>
+      </div>
+      <div class="config-grid">
+        <div class="config-group">
+          <h3>Steps to run</h3>
+          <label class="check-row"><input type="checkbox" id="stepAlign" checked/> Alignment (MAFFT/MUSCLE)<span class="hint">auto-detect</span></label>
+          <label class="check-row"><input type="checkbox" id="stepModel" checked/> Model selection<span class="hint">ModelTest-NG</span></label>
+          <label class="check-row"><input type="checkbox" id="stepTree" checked/> Tree inference<span class="hint">IQ-TREE 2</span></label>
+          <label class="check-row"><input type="checkbox" id="stepReport" checked/> Report generation</label>
+        </div>
+        <div class="config-group">
+          <h3>Model Selection</h3>
+          <label class="field">
+            <span>Schemes</span>
+            <select id="cfgSchemes">
+              <option value="3">3 (JC,HKY,GTR)</option>
+              <option value="5">5 schemes</option>
+              <option value="7">7 schemes</option>
+              <option value="11" selected>11 schemes — all named</option>
+              <option value="203">203 — all GTR submatrices</option>
+            </select>
+          </label>
+          <label class="field">
+            <span>Topology</span>
+            <select id="cfgTopology">
+              <option value="mp" selected>Maximum parsimony</option>
+              <option value="ml">Maximum likelihood</option>
+              <option value="fixed-ml-jc">Fixed JC ML</option>
+              <option value="random">Random</option>
+            </select>
+          </label>
+          <label class="field">
+            <span>Template</span>
+            <select id="cfgTemplate">
+              <option value="">All models</option>
+              <option value="raxml">RAxML</option>
+              <option value="mrbayes">MrBayes</option>
+              <option value="phyml">PhyML</option>
+              <option value="paup">PAUP*</option>
+            </select>
+          </label>
+        </div>
+        <div class="config-group">
+          <h3>Tree Inference</h3>
+          <label class="field">
+            <span>Bootstrap replicates</span>
+            <select id="cfgBootstrap">
+              <option value="100">100</option>
+              <option value="1000" selected>1000 (UFBoot)</option>
+              <option value="5000">5000</option>
+            </select>
+          </label>
+          <label class="field">
+            <span>Ascertainment bias</span>
+            <select id="cfgAsc">
+              <option value="">None</option>
+              <option value="lewis">Lewis</option>
+              <option value="felsenstein">Felsenstein</option>
+              <option value="stamatakis">Stamatakis</option>
+            </select>
+          </label>
+          <label class="field">
+            <span>CPU threads</span>
+            <select id="cfgThreads">
+              <option value="1">1</option>
+              <option value="2" selected>2</option>
+              <option value="4">4</option>
+              <option value="AUTO">AUTO</option>
+            </select>
+          </label>
+        </div>
+      </div>
+      <div class="card-footer">
+        <button class="btn-accent large" id="btnRunPipeline">▶ Run Pipeline</button>
+      </div>
+    </div>
+
+    <!-- Progress -->
+    <div class="card hidden" id="progressCard">
+      <div class="card-header"><span class="card-num">03</span><h2>Running</h2></div>
+      <div class="pipeline-progress" id="pipelineProgress"></div>
+      <div class="progress-log" id="progressLog"></div>
+    </div>
+
+    <!-- Results inline -->
+    <div class="hidden" id="plResults"></div>
+  </div>
+
+  <!-- ════════════════════════════════════════════════════
+       VIEW: MODEL SELECTION ONLY
+  ════════════════════════════════════════════════════ -->
+  <div class="view hidden" id="view-modeltest">
+    <div class="view-header">
+      <h1>Model Selection</h1>
+      <p class="view-sub">Run model selection only — AIC · AICc · BIC · hLRT · Parameter importances</p>
+    </div>
+    <div class="card">
+      <p style="color:var(--text-dim);font-size:13px">Upload a file or select a job from History, then use <strong>Full Pipeline → Model Selection only</strong>.</p>
+      <p style="color:var(--text-dim);font-size:13px;margin-top:8px">Or start from the Full Pipeline tab with only "Model selection" checked.</p>
+    </div>
+    <div id="mtResultsView" class="hidden"></div>
+  </div>
+
+  <!-- ════════════════════════════════════════════════════
+       VIEW: DATABASES
+  ════════════════════════════════════════════════════ -->
+  <div class="view hidden" id="view-database">
+    <div class="view-header">
+      <h1>Genomic Databases</h1>
+      <p class="view-sub">Search and retrieve sequences from NCBI GenBank, EMBL-ENA, BOLD Systems, UniProt</p>
+    </div>
+    <div class="db-cards-hero">
+      <div class="db-hero-card" data-db="ncbi">
+        <div class="dbh-badge ncbi">NCBI</div>
+        <div class="dbh-name">GenBank</div>
+        <div class="dbh-desc">National Center for Biotechnology Information — nucleotide &amp; protein</div>
+        <div class="dbh-examples">COI mammals · 16S rRNA · spike protein</div>
+      </div>
+      <div class="db-hero-card" data-db="embl">
+        <div class="dbh-badge embl">EBI</div>
+        <div class="dbh-name">EMBL-ENA</div>
+        <div class="dbh-desc">European Nucleotide Archive — nucleotide &amp; protein</div>
+        <div class="dbh-examples">cytb fish · ITS2 fungi</div>
+      </div>
+      <div class="db-hero-card" data-db="bold">
+        <div class="dbh-badge bold">BOLD</div>
+        <div class="dbh-name">Barcode of Life</div>
+        <div class="dbh-desc">BOLD Systems — COI, ITS, rbcL, matK barcodes</div>
+        <div class="dbh-examples">Apis mellifera · Drosophila</div>
+      </div>
+      <div class="db-hero-card" data-db="uniprot">
+        <div class="dbh-badge up">UP</div>
+        <div class="dbh-name">UniProt</div>
+        <div class="dbh-desc">Universal Protein Resource — reviewed &amp; unreviewed</div>
+        <div class="dbh-examples">hemoglobin · cytochrome c</div>
+      </div>
+    </div>
+
+    <div class="card" id="dbSearchCard">
+      <div class="card-header"><span class="card-num">Search</span><h2 id="dbSearchTitle">NCBI GenBank</h2></div>
+      <div class="form-grid">
+        <div class="field flex3">
+          <label>Query</label>
+          <input type="text" id="dbSearchQuery" placeholder="Search term…"/>
+        </div>
+        <div class="field">
+          <label>Type</label>
+          <select id="dbSearchType"><option value="nucleotide">Nucleotide</option><option value="protein">Protein</option></select>
+        </div>
+        <div class="field">
+          <label>Max</label>
+          <select id="dbSearchMax"><option>10</option><option selected>20</option><option>50</option><option>100</option></select>
+        </div>
+      </div>
+      <div id="boldSearchOpts" class="hidden">
+        <div class="form-grid">
+          <div class="field">
+            <label>Barcode marker</label>
+            <select id="dbBoldMarker">
+              <option value="COI-5P">COI-5P</option>
+              <option value="ITS">ITS</option>
+              <option value="rbcL">rbcL</option>
+              <option value="matK">matK</option>
+              <option value="16S">16S</option>
+            </select>
+          </div>
+          <div class="field flex2">
+            <label>Geography</label>
+            <input type="text" id="dbBoldGeo" placeholder="optional"/>
+          </div>
+        </div>
+      </div>
+      <button class="btn-primary" id="dbBtnSearch">Search</button>
+      <div class="search-results-wrap hidden" id="dbSearchResults"></div>
+      <div class="fetch-bar hidden" id="dbFetchBar">
+        <span id="dbFetchCount">0 selected</span>
+        <button class="btn-accent" id="dbBtnFetch">Fetch & Create Job →</button>
+      </div>
+      <div class="seq-info-box hidden" id="dbSeqInfo"></div>
+    </div>
+  </div>
+
+  <!-- ════════════════════════════════════════════════════
+       VIEW: COMPARE DATASETS
+  ════════════════════════════════════════════════════ -->
+  <div class="view hidden" id="view-compare">
+    <div class="view-header">
+      <h1>Compare Datasets</h1>
+      <p class="view-sub">Visualise model selection across multiple alignments — concordance, uncertainty, criterion agreement</p>
+    </div>
+    <div class="card">
+      <div class="card-header"><span class="card-num">Select</span><h2>Choose completed jobs to compare</h2></div>
+      <div id="compareJobList" class="compare-job-list"></div>
+      <button class="btn-primary" id="btnCompare">Compare Selected Jobs</button>
+    </div>
+    <div id="compareResults" class="hidden"></div>
+  </div>
+
+  <!-- ════════════════════════════════════════════════════
+       VIEW: REPORTS
+  ════════════════════════════════════════════════════ -->
+  <div class="view hidden" id="view-report">
+    <div class="view-header">
+      <h1>Reports &amp; Export</h1>
+      <p class="view-sub">Publication-ready PDF · Methods section · Tool commands · Data export</p>
+    </div>
+    <div class="card">
+      <div class="card-header"><span class="card-num">Job</span><h2>Select a completed job</h2></div>
+      <div id="reportJobList" class="compare-job-list"></div>
+      <button class="btn-primary" id="btnGenerateReport">Generate Report</button>
+    </div>
+    <div id="reportOutput" class="hidden"></div>
+  </div>
+
+</main>
+
+<!-- ╔═ RESULTS MODAL ═════════════════════════════════════╗ -->
+<div class="modal-overlay hidden" id="modalOverlay">
+  <div class="modal" id="resultsModal">
+    <div class="modal-header">
+      <span class="modal-title" id="modalTitle">Results</span>
+      <button class="modal-close" id="modalClose">✕</button>
+    </div>
+    <div class="modal-body" id="modalBody"></div>
+  </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<script src="{{ url_for('static', filename='js/app.js') }}"></script>
+</body>
+</html>
