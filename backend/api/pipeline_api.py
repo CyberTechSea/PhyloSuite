@@ -39,14 +39,16 @@ def upload():
     job = jm.create(job_id)
 
     fname = secure_filename(f.filename)
-    fpath = job["upload_dir"] / fname
+    fpath = Path(job["upload_dir"]) / fname
     f.save(fpath)
 
     from core.seq_parser import SeqParser
     info = SeqParser().parse(str(fpath))
-    jm.update(job_id, {"seq_file": str(fpath), "seq_info": info, "status": "uploaded"})
+    # Save a lightweight version (without raw sequences dict) to the job JSON
+    info_light = {k: v for k, v in info.items() if k != "sequences"}
+    jm.update(job_id, {"seq_file": str(fpath), "seq_info": info_light, "status": "uploaded"})
 
-    return jsonify({"job_id": job_id, **info})
+    return jsonify({"job_id": job_id, **info_light})
 
 
 # ── Start full pipeline ─────────────────────────────────────

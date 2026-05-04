@@ -34,17 +34,14 @@ class JobManager:
             "results_dir": str(results_dir),
         }
         self._save(job_id, job)
-        job["upload_dir"] = upload_dir
-        job["results_dir"] = results_dir
-        return job
+        return job  # upload_dir and results_dir are already strings
 
     def load(self, job_id):
         jf = self._job_file(job_id)
         if not jf.exists():
             return None
         job = json.loads(jf.read_text())
-        job["upload_dir"] = Path(job["upload_dir"])
-        job["results_dir"] = Path(job["results_dir"])
+        # All values remain strings — fully JSON-serializable
         return job
 
     def update(self, job_id, data):

@@ -14,6 +14,11 @@ def get_job(job_id):
         return jsonify({"error": "Not found"}), 404
     # Strip heavy data for status poll
     light = {k: v for k, v in job.items() if k not in ("modeltest_result",)}
+    # Also strip raw sequences dict from seq_info (can be huge)
+    if "seq_info" in light and isinstance(light["seq_info"], dict):
+        si = dict(light["seq_info"])
+        si.pop("sequences", None)
+        light["seq_info"] = si
     return jsonify(light)
 
 

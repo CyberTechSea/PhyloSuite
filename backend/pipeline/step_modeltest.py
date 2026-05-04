@@ -175,9 +175,17 @@ class StepModelTest:
 
     # ── Built-in Python engine ──────────────────────────────
     def _run_builtin(self, job, opts, results_dir):
+        from core.seq_parser import SeqParser
         seq_info = job.get("seq_info", {})
-        seqs = seq_info.get("sequences", {})
-        n = seq_info.get("n_sequences", 0)
+
+        # Re-parse to get actual sequences (not stored in job JSON to save space)
+        try:
+            full_info = SeqParser().parse(job["seq_file"])
+            seqs = full_info.get("sequences", {})
+        except Exception:
+            seqs = {}
+
+        n = seq_info.get("n_sequences", len(seqs))
         s = seq_info.get("n_sites", 1)
         dt = seq_info.get("datatype", "DNA")
 
