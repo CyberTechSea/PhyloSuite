@@ -244,18 +244,51 @@ async function runPipeline() {
 
 function startPolling(jobId, steps) {
   if (state.pollTimer) clearInterval(state.pollTimer);
+  let pollCount = 0;
+
   state.pollTimer = setInterval(async () => {
+    pollCount++;
     try {
       const job = await api(`/api/jobs/${jobId}`);
       renderPipelineProgress(steps, job);
-      logProgress(`[${new Date().toLocaleTimeString()}] Status: ${job.status} (${job.progress || 0}%)`);
-      if (job.status === 'completed' || job.status === 'error') {
+      logProgress(`[${new Date().toLocaleTimeString()}] ${job.status} (${job.progress || 0}%)`);
+
+      if (job.status === 'error') {
         clearInterval(state.pollTimer);
         await loadJobs();
-        if (job.status === 'completed') {
-          const full = await api(`/api/jobs/${jobId}/full`);
-          renderInlineResults(full);
-        }
+        document.getElementById('progressCard').classList.add('hidden');
+        const el = document.getElementById('plResults');
+        el.classList.remove('hidden');
+        const errMsg = job.error || 'Unknown error';
+        const isToolMissing = errMsg.toLowerCase().includes('not found') || errMsg.includes('PATH');
+        el.innerHTML = `
+          <div style="background:rgba(248,113,113,.07);border:1px solid rgba(248,113,113,.3);
+            border-radius:10px;padding:20px;margin-bottom:16px">
+            <div style="color:var(--red);font-family:var(--display);font-size:15px;font-weight:700;margin-bottom:8px">
+              Pipeline error
+            </div>
+            <div style="font-family:var(--mono);font-size:12px;color:var(--text-dim);margin-bottom:12px">${errMsg}</div>
+            ${isToolMissing ? `
+            <div style="color:var(--amber);font-size:12px;margin-top:8px">
+              <strong>Tip:</strong> External tool not found in PATH.<br/>
+              Uncheck Alignment and Tree inference in the config,
+              run with Model selection only — the built-in Python engine
+              requires no external tools.
+            </div>` : ''}
+          </div>`;
+        return;
+      }
+
+      if (job.status === 'completed') {
+        clearInterval(state.pollTimer);
+        await loadJobs();
+        const full = await api(`/api/jobs/${jobId}/full`);
+        renderInlineResults(full);
+      }
+
+      if (pollCount >= 1800) {
+        clearInterval(state.pollTimer);
+        logProgress('Timeout — check job status in History.');
       }
     } catch(e) {}
   }, 2000);
@@ -756,8 +789,8 @@ function showSeqInfo(elId, data) {
   }
   el.style.borderLeftColor = '';
   const fields = [
-    ['Sequences', data.sequences ?? data.n_sequences],
-    ['Sites',     data.sites     ?? data.n_sites],
+    ['Sequences', data.n_sequences ?? (typeof data.sequences === 'number' ? data.sequences : Object.keys(data.sequences || {}).length || '—')],
+    ['Sites',     data.n_sites    ?? data.sites],
     ['Format',    data.format],
     ['Data type', data.datatype],
     ['Source',    data.source ?? 'local'],
