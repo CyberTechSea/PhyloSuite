@@ -186,6 +186,7 @@ The built-in engine is suitable for exploration and development. Install ModelTe
 If you use PhyloSuite in published work, please cite:
 
 > Francesco Paolo Patti (2026). PhyloSuite: an integrated phylogenetic analysis pipeline. GitHub: https://github.com/CyberTechSea/PhyloSuite
+> https://doi.org/10.5281/zenodo.20023552
 
 And the underlying tools you used:
 
