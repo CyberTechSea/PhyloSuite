@@ -1,0 +1,79 @@
+cff-version: 1.2.0
+message: "If you use PhyloSuite in published work, please cite it as below."
+title: "PhyloSuite: an integrated phylogenetic analysis pipeline"
+version: "1.0.2"
+date-released: "2026-05-04"
+abstract: >
+  PhyloSuite is an integrated phylogenetic analysis pipeline that combines
+  sequence fetching, multiple sequence alignment, substitution model selection,
+  phylogenetic tree inference (via IQ-TREE 2), and publication-ready report
+  generation into a single local web interface. It includes an end-to-end
+  pipeline module, a comparative dashboard for multi-dataset model selection,
+  and PhyloWizard Reports with automated Methods section text and inference
+  commands for five phylogenetic tools.
+authors:
+  - family-names: "Patti"
+    given-names: "Francesco Paolo"
+    orcid: "https://orcid.org/0000-0002-7975-2947"
+license: MIT
+repository-code: "https://github.com/CyberTechSea/PhyloSuite"
+url: "https://github.com/CyberTechSea/PhyloSuite"
+doi: "10.5281/zenodo.20023552"
+type: software
+keywords:
+  - phylogenetics
+  - model selection
+  - IQ-TREE
+  - ModelTest-NG
+  - sequence alignment
+  - MAFFT
+  - MUSCLE
+  - bioinformatics
+  - pipeline
+references:
+  - type: article
+    title: "ModelTest-NG: A New and Scalable Tool for the Selection of DNA and Protein Evolutionary Models"
+    authors:
+      - family-names: "Darriba"
+        given-names: "D."
+      - family-names: "Posada"
+        given-names: "D."
+      - family-names: "Kozlov"
+        given-names: "A.M."
+      - family-names: "Stamatakis"
+        given-names: "A."
+      - family-names: "Flouri"
+        given-names: "T."
+      - family-names: "Morel"
+        given-names: "B."
+    journal: "Molecular Biology and Evolution"
+    volume: 37
+    issue: 1
+    start: 291
+    end: 294
+    year: 2020
+    doi: "10.1093/molbev/msz189"
+  - type: article
+    title: "IQ-TREE 2: New Models and Methods for Phylogenetic Inference"
+    authors:
+      - family-names: "Minh"
+        given-names: "B.Q."
+      - family-names: "Schmidt"
+        given-names: "H.A."
+      - family-names: "Chernomor"
+        given-names: "O."
+      - family-names: "Schrempf"
+        given-names: "D."
+      - family-names: "Woodhams"
+        given-names: "M.D."
+      - family-names: "von Haeseler"
+        given-names: "A."
+      - family-names: "Lanfear"
+        given-names: "R."
+    journal: "Molecular Biology and Evolution"
+    volume: 37
+    issue: 5
+    start: 1530
+    end: 1534
+    year: 2020
+    doi: "10.1093/molbev/msaa015"
